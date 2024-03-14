@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "opcua-traffic-analyser"
+version = "0.1.0"
+description = "Traffic analyser for instrusion detection in OPC UA networks"
+authors = ["Jonathan T. Silva <jonathantobias2009@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = "^1.26.4"
+pandas = "^2.2.1"
+scapy = "^2.5.0"
+scikit-learn = "^1.4.1.post1"
+matplotlib = "^3.8.3"
+seaborn = "^0.13.2"
+plotly = "^5.20.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

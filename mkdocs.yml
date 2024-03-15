@@ -1,0 +1,16 @@
+site_name: OPC UA Traffic Analyser
+repo_url: https://github.com/JonathanTSilva/opcua-analyser
+repo_name: JonathanTSilva/opcua-analyser
+edit_uri: /tree/main/docs
+
+theme:
+  name: material
+  language: en  # pt-BR
+  logo: assets/uanalyser.png
+  favicon: assets/uanalyser-dark-bordered.png
+
+markdown_extensions:
+  - attr_list
+
+extra_css:
+  - stylesheets/extra.css

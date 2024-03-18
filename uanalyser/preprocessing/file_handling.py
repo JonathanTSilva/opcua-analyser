@@ -1,4 +1,5 @@
 import pyshark
+# import scapy.all as scapy
 
 
 def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
@@ -22,10 +23,8 @@ def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
         raise FileNotFoundError('No such file or directory.')
     else:
         capture = pyshark.FileCapture(file_path, keep_packets=False)
-    #     # for packet in capture:
-    #     #     print(packet)
-    #     # return capture
-    #     return pyshark.FileCapture(file_path, keep_packets=False)
+        # capture = scapy.rdpcap(file_path)
+        return capture
 
 
 def extract_attack_name(file_path: str) -> list:
@@ -39,10 +38,11 @@ def extract_attack_name(file_path: str) -> list:
 
     Raises:
         ValueError: If the file name format is invalid.
+
     Examples:
         >>> extract_attack_name('data/pcapng_files/DoS/0-DDoS.pcapng')
         [0, 'DDoS']
-        
+
         >>> extract_attack_name('../tests/assets/example.pcapng')
         Traceback (most recent call last):
         ...

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "opcua-traffic-analyser"
 version = "0.1.0"
-description = "Traffic analyser for instrusion detection in OPC UA networks"
+description = "Traffic analyser for intrusion detection in OPC UA networks"
 authors = ["Jonathan T. Silva <jonathantobias2009@hotmail.com>"]
 readme = "README.md"
 

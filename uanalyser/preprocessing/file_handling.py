@@ -1,5 +1,5 @@
 import pyshark
-# import scapy.all as scapy
+import scapy.all as scapy
 
 
 def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
@@ -11,20 +11,41 @@ def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
     Returns:
         capture: The PCAPNG file opened.
 
+    Raises:
+        AttributeError: If `file_path` is None.
+        FileNotFoundError: If the file does not exist.
+        ValueError: If `file_path` is an empty string.
+
     Examples:
+        >>> open_pcapng_file('tests/assets/example.pcapng')
+        <example.pcapng: TCP:6005 UDP:114 ICMP:0 Other:10>
+
+        >>> open_pcapng_file('tests/assets/null_example.pcapng')
+        Traceback (most recent call last):
+        ...
+        FileNotFoundError: No such file or directory: tests/assets/null_example.pcapng.
+
+        >>> open_pcapng_file(None)
+        Traceback (most recent call last):
+        ...
+        ValueError: `file_path` must not be None or an empty string.
+
         >>> open_pcapng_file('')
         Traceback (most recent call last):
         ...
-        FileNotFoundError: No such file or directory.
+        ValueError: `file_path` must not be None or an empty string.
     """
-    if file_path == None:
-        raise FileNotFoundError('No such file or directory: None')
-    elif file_path == '':
-        raise FileNotFoundError('No such file or directory.')
-    else:
-        capture = pyshark.FileCapture(file_path, keep_packets=False)
-        # capture = scapy.rdpcap(file_path)
+    if not file_path:
+        raise ValueError('`file_path` must not be None or an empty string.')
+
+    try:
+        # capture = pyshark.FileCapture(file_path, keep_packets=False)  # <FileCapture>
+        capture = scapy.rdpcap(file_path)
         return capture
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            'No such file or directory: ' + file_path + '.'
+        )
 
 
 def extract_attack_name(file_path: str) -> list:

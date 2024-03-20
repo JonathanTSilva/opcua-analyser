@@ -1,18 +1,17 @@
-import pyshark
 import scapy.all as scapy
 
 
-def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
-    """Open a PCAPNG file.
+def open_pcapng_file(file_path: str) -> scapy.PacketList:
+    """Open a PCAPNG file using scapy.
 
     Args:
         file_path: The PCAPNG file to open.
 
     Returns:
-        The PCAPNG file opened.
+        The PCAPNG file opened by scapy package.
 
     Raises:
-        AttributeError: If `file_path` is None.
+        AttributeError: If `file_path` is **None**.
         FileNotFoundError: If the file does not exist.
         ValueError: If `file_path` is an empty string or the if the file has no content.
 
@@ -44,8 +43,8 @@ def open_pcapng_file(file_path: str) -> pyshark.FileCapture:
         raise ValueError('`file_path` must not be None or an empty string.')
 
     try:
-        # capture = pyshark.FileCapture(file_path, keep_packets=False)  # <FileCapture>
         return scapy.rdpcap(file_path)
+        # return pyshark.FileCapture(file_path, keep_packets=False)
     except FileNotFoundError:
         raise FileNotFoundError(f'No such file or directory: "{file_path}".')
     except scapy.Scapy_Exception:
@@ -56,7 +55,7 @@ def extract_attack_name(file_path: str) -> list:
     """Extract the name of the attack from the file name.
 
     Args:
-        file_path (String): The file path.
+        file_path: The file path.
 
     Returns:
         The list containing the attack type [0] and name [1].
@@ -68,7 +67,7 @@ def extract_attack_name(file_path: str) -> list:
         >>> extract_attack_name('data/pcapng_files/DoS/0-DDoS.pcapng')
         [0, 'DDoS']
 
-        >>> extract_attack_name('../tests/assets/example.pcapng')
+        >>> extract_attack_name('tests/assets/example.pcapng')
         Traceback (most recent call last):
         ...
         ValueError: Invalid file name format.

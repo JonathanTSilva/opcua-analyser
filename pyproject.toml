@@ -35,7 +35,9 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-pythonpath = "."
+pythonpath = [
+    ".", "uanalyser",
+]
 addopts = "--doctest-modules"
 
 [tool.isort]

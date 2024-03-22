@@ -1,3 +1,7 @@
+"""
+Provides functions for handling PCAPNG files and extracting information from this.
+"""
+
 import scapy.all as scapy
 
 

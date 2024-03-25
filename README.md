@@ -4,14 +4,14 @@
 
 Below are the guide tables with essential information about the test files used in the development of this tool
 
-<style type="text/css">
+<!--<style type="text/css">
 .tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;border:1px solid #ddd;}
 .tg td{background-color:#fff;border-bottom-width:1px;border-color:#ccc;border-style:solid;border-top-width:1px; border-width:0px;color:#333;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px; word-break:normal;}
 .tg th{background-color:#f0f0f0;border-bottom-width:1px;border-color:#ccc;border-style:solid;border-top-width:1px; border-width:0px;color:#333;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden; padding:10px 5px;word-break:normal;}
 .tg .header{border-color:inherit;font-weight:bold;text-align:center;vertical-align:center}
 .tg .hd-name, .tg .name{width: 200px; word-wrap: break-word;}
 .tg tbody tr:nth-child(even) {background-color: #f2f2f2;}
-</style>
+</style>-->
 <table class="tg">
 <thead>
   <tr>

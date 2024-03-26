@@ -1,5 +1,7 @@
 # OPC UA Traffic Analyser: uanalyser
 
+➕ Traffic analyser for intrusion detection in OPC UA networks
+
 ## Information
 
 Below are the guide tables with essential information about the test files used in the development of this tool

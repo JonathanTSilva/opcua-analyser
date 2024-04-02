@@ -47,7 +47,7 @@ profile = "black"
 line_length = 79
 
 [tool.taskipy.tasks]
-lint = "blue --check --diff . && isort --check --diff ."
+lint = "blue --check --diff . | colordiff && isort --check --diff . | colordiff"
 docs = "mkdocs serve"
 pre_test = "task lint"
 test = "pytest -s -x --cov=uanalyser -vv"

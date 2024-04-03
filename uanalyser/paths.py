@@ -10,6 +10,7 @@ __all__ = [
     'TEMP',
     'ROOT',
     'LOG',
+    'DATA',
     'TESTS',
     'TESTS_ASSETS',
     'DOCS',
@@ -20,6 +21,7 @@ UANALYSER = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(UANALYSER)
 TEMP = tempfile.gettempdir()
 LOG = os.path.join(UANALYSER, 'uanalyser.log')
+DATA = os.path.join(ROOT, 'Data/network_traffic/no_filter')
 TESTS = os.path.join(ROOT, 'tests')
 TESTS_ASSETS = os.path.join(TESTS, 'assets')
 DOCS = os.path.join(ROOT, 'docs')

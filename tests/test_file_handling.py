@@ -48,11 +48,17 @@ def test_open_null_pcapng_file():
 @mark.parametrize(
     'file_path, expected',
     [
-        ('path/0-normal_traffic.pcapng', [0, 'normal_traffic']),
-        ('path/2-attack_traffic.pcapng', [2, 'attack_traffic']),
         (
-            'path/1-dos_funciton_call_null_deref.pcapng',
-            [1, 'dos_funciton_call_null_deref'],
+            'path/0-normal_traffic.pcapng',
+            {'Type': 'None', 'Name': 'NORMAL TRAFFIC'},
+        ),
+        (
+            'path/2-attack_traffic.pcapng',
+            {'Type': 'Sign & Encrypt', 'Name': 'ATTACK TRAFFIC'},
+        ),
+        (
+            'path/1-dos_function_call_null_deref.pcapng',
+            {'Type': 'Sign', 'Name': 'DOS FUNCTION CALL NULL DEREF'},
         ),
     ],
 )
@@ -60,3 +66,21 @@ def test_extract_valid_attack_name(file_path: str, expected: list[int | str]):
     result = extract_attack_name(file_path)
 
     assert result == expected
+
+
+@mark.parametrize(
+    'file_path, expected',
+    [
+        (
+            'path/normal_traffic.pcapng',
+            'Invalid file name format.',
+        ),
+        ('path/3-attack_traffic.pcapng', 'Invalid attack type.'),
+    ],
+)
+def test_extract_wrong_attack_name(file_path: str, expected: list[int | str]):
+
+    with raises(ValueError) as error:
+        extract_attack_name(file_path)
+
+    assert expected == error.value.args[0]

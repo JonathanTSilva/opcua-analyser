@@ -55,28 +55,57 @@ def open_pcapng_file(file_path: str) -> scapy.PacketList:
         raise ValueError(f'The file "{file_path}" has no content.')
 
 
-def extract_attack_name(file_path: str) -> list:
+def extract_attack_name(file_path: str) -> dict:
     """Extract the name of the attack from the file name.
+    The file name must be in the format `{attack_type}-{attack_name}.pcapng`.
+    The attack types are:
+
+        - 0: None
+        - 1: Sign
+        - 2: Sign & Encrypt
 
     Args:
         file_path: The file path.
 
     Returns:
-        The list containing the attack type [0] and name [1].
+        A dictionary containing the attack type and name.
 
     Raises:
         ValueError: If the file name format is invalid.
 
     Examples:
         >>> extract_attack_name('data/pcapng_files/DoS/0-DDoS.pcapng')
-        [0, 'DDoS']
+        {'Type': 'None', 'Name': 'DDOS'}
+
+        >>> extract_attack_name('data/pcapng_files/DoS/2-MITM_arp_poisoning.pcapng')
+        {'Type': 'Sign & Encrypt', 'Name': 'MITM ARP POISONING'}
 
         >>> extract_attack_name('tests/assets/example.pcapng')
         Traceback (most recent call last):
         ...
         ValueError: Invalid file name format.
+
+        >>> extract_attack_name('tests/assets/3-example.pcapng')
+        Traceback (most recent call last):
+        ...
+        ValueError: Invalid attack type.
     """
     file_parts = file_path.split('/')[-1].split('.')[0].split('-')
+
     if len(file_parts) < 2:
         raise ValueError('Invalid file name format.')
-    return [int(file_parts[0]), file_parts[1]]
+
+    attack_type = int(file_parts[0])
+    if attack_type == 0:
+        attack_type = 'None'
+    elif attack_type == 1:
+        attack_type = 'Sign'
+    elif attack_type == 2:
+        attack_type = 'Sign & Encrypt'
+    else:
+        raise ValueError('Invalid attack type.')
+
+    return {
+        'Type': attack_type,
+        'Name': file_parts[1].replace('_', ' ').upper(),
+    }

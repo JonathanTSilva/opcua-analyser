@@ -14,13 +14,12 @@ PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
 def main():
     # Local variables
     chronology_list = []
-    attack = []
     source_list = []
     destination_list = []
     opcua_packets_index = []
 
     # Extract the attack name
-    attack_info = extract_attack_name(PCAPNG)
+    attack = extract_attack_name(PCAPNG)
 
     # Open File
     capture = open_pcapng_file(PCAPNG)
@@ -57,14 +56,19 @@ def main():
         # Detect the attack
         if (
             detect_opcua_attack(packet, SERVER_IP, CLIENTS_IPS)
-            and len(attack) == 0
+            and 'Packet index' not in attack
         ):
-            attack.append([relative_time, index])
+            attack['Relative time'] = relative_time
+            attack['Packet index'] = index
 
     # Calculate the throughput in kbps
     period = chronology_list[-1][0]
-    throughput_kbps = calculate_throughput_in_kbps(capture, chronology_list, period)
-    print(throughput_kbps)
+    throughput_kbps = calculate_throughput_in_kbps(
+        capture, chronology_list, period
+    )
+    seconds = list(range(1, len(throughput_kbps) + 1))
+
+    print(attack)
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ def calculate_throughput_in_kbps(
 
         Additionaly, generate a list of packet timestamps and indices:
         >>> initial_time = capture[0].time
-        >>> chronology = [(round(float(packet.time) - float(initial_time), 6), index) for index, packet in enumerate(capture)]
+        >>> chronology = [(index, round(float(packet.time) - float(initial_time), 6)) for index, packet in enumerate(capture)]
 
         Then, you can use these packets to call the function:
 
@@ -35,9 +35,9 @@ def calculate_throughput_in_kbps(
     for second in range(int(period)):
         len_bytes = 0
         for elem in chronology:
-            if int(elem[0]) == second * segment_duration:
-                len_bytes += len(capture[elem[1]])
-            if int(elem[0]) > second * segment_duration:
+            if int(elem[1]) == second * segment_duration:
+                len_bytes += len(capture[elem[0]])
+            if int(elem[1]) > second * segment_duration:
                 break
         throughput_persecond.append(len_bytes)
     return [value / 1024 for value in throughput_persecond]
@@ -97,6 +97,77 @@ def clear_redundant_data(capture: scapy.PacketList) -> scapy.PacketList:
         if packet.time not in [p.time for p in unique_packets]:
             unique_packets.append(packet)
     return scapy.PacketList(unique_packets)
+
+
+def calculate_round_trip_time(
+    capture: scapy.PacketList, opcua_packets_index: list
+) -> list:
+    """_summary_
+
+    Args:
+        capture (scapy.PacketList): _description_
+        opcua_packets_index (list): _description_
+
+    Returns:
+        list: _description_
+    """
+
+
+def define_communication_type(
+    packet: scapy.Packet, server_ip: str, clients_ip: list
+) -> str:
+    """Define the communication type of a packet. If the packet is from the server to the client, the flow type is 'Server to Client'. If the packet is from the client to the server, the flow type is 'Client to Server'. If the packet is from the attacker to the server, the flow type is 'Attacker to Server'. If the packet is from the server to the attacker, the flow type is 'Server to Attacker'. If the packet is not from any of these flows, the flow type is 'Unknown'.
+
+    Args:
+        packet: The packet to be analysed.
+        server_ip: The IP address of the OPCUA server.
+        clients_ip: List of clients IP addresses.
+
+    Returns:
+        The communication type of the packet.
+
+    Examples:
+        First, you need to read a packet capture file to get the packets:
+
+        >>> from scapy.all import rdpcap
+        >>> capture = rdpcap('tests/assets/0-dos_attack_example.pcapng')
+
+        Then, you can use these packets to call the function:
+
+        >>> define_communication_type(capture[5000], '192.168.164.101', ['192.168.164.102'])
+        'Client to Server'
+
+        >>> define_communication_type(capture[97], '192.168.164.101', ['192.168.164.102'])
+        'Server to Client'
+
+        >>> define_communication_type(capture[10], '192.168.164.101', ['192.168.164.102'])
+        'Unknown'
+
+        >>> define_communication_type(capture[1973], '192.168.164.101', ['192.168.164.102'])
+        'Attacker to Server'
+
+        >>> define_communication_type(capture[1978], '192.168.164.101', ['192.168.164.192'])
+        'Server to Attacker'
+    """
+    if packet.haslayer(scapy.TCP):
+        if (
+            packet[scapy.IP].src == server_ip
+            and packet[scapy.IP].dst in clients_ip
+        ):
+            return 'Server to Client'
+        if (
+            packet[scapy.IP].dst == server_ip
+            and packet[scapy.IP].src in clients_ip
+        ):
+            return 'Client to Server'
+        if detect_opcua_attack(packet, server_ip, clients_ip):
+            return 'Attacker to Server'
+        if (
+            packet[scapy.IP].src in server_ip
+            and packet[scapy.IP].dst not in clients_ip
+        ):
+            return 'Server to Attacker'
+    return 'Unknown'
 
 
 def detect_opcua_attack(

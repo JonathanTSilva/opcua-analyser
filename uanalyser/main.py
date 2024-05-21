@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
 import scapy.all as scapy
 from paths import *
+from plot.graphics import *
 from preprocessing.file_handling import *
 from preprocessing.operations import *
 
@@ -8,14 +8,13 @@ SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
 OPCUA_PORTS = [4840]
 PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
-# PCAPNG = f'{DATA}/2-dos_function_call_null_deref.pcapng'
+# PCAPNG = f'{DATA}/0-dos_function_call_null_deref.pcapng'
 
 
 def main():
     # Local variables
     chronology_list = []
-    source_list = []
-    destination_list = []
+    comm_description = []
     opcua_packets_index = []
 
     # Extract the attack name
@@ -35,18 +34,19 @@ def main():
         if packet.time - first_packet.time > 60:
             break
 
-        # Source and destination IP addresses
-        source_list.append(packet.src)
-        destination_list.append(packet.dst)
-
         # Calculate the relative time of each packet
         relative_time = calculate_package_time_difference(packet, first_packet)
-        # chronology_list.append([relative_time, index])
+
+        # Define the type of the package: request or response
+        comm_type = define_communication_type(packet, SERVER_IP, CLIENTS_IPS)
+
         # Clear reduntant data
         if index < 1:
-            chronology_list.append([0, index])
-        if not any(relative_time == sublist[0] for sublist in chronology_list):
-            chronology_list.append([relative_time, index])
+            chronology_list.append([index, 0])
+            comm_description.append([index, packet.src, packet.dst, comm_type])
+        if not any(relative_time == sublist[1] for sublist in chronology_list):
+            chronology_list.append([index, relative_time])
+            comm_description.append([index, packet.src, packet.dst, comm_type])
 
         # Filter OPC UA packets
         if is_opcua_packet(packet, OPCUA_PORTS):
@@ -62,13 +62,24 @@ def main():
             attack['Packet index'] = index
 
     # Calculate the throughput in kbps
-    period = chronology_list[-1][0]
+    period = chronology_list[-1][1]
     throughput_kbps = calculate_throughput_in_kbps(
         capture, chronology_list, period
     )
     seconds = list(range(1, len(throughput_kbps) + 1))
 
-    print(attack)
+    # print('Attack: ', attack)
+    # print('throughput_kbps: ',throughput_kbps)
+    # print('Seconds: ',seconds)
+    # print('chronology_list: ', len(chronology_list))
+    # print('opcua_packets_index', opcua_packets_index)
+    # print('Communication list: ', comm_description)
+
+    # Plot the Throughput graph
+    plot_throughput(throughput_kbps, seconds, attack)
+
+    # Calculate the cycle time
+    # rtt = calculate_round_trip_time(capture, addresses, SERVER_IP, CLIENTS_IPS)
 
 
 if __name__ == '__main__':

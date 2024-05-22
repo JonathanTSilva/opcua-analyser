@@ -14,7 +14,6 @@ PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
 def main():
     # Local variables
     chronology_list = []
-    comm_description = []
     opcua_packets_index = []
 
     # Extract the attack name
@@ -42,11 +41,9 @@ def main():
 
         # Clear reduntant data
         if index < 1:
-            chronology_list.append([index, 0])
-            comm_description.append([index, packet.src, packet.dst, comm_type])
+            chronology_list.append([index, 0, packet.src, packet.dst, comm_type])
         if not any(relative_time == sublist[1] for sublist in chronology_list):
-            chronology_list.append([index, relative_time])
-            comm_description.append([index, packet.src, packet.dst, comm_type])
+            chronology_list.append([index, relative_time, packet.src, packet.dst, comm_type])
 
         # Filter OPC UA packets
         if is_opcua_packet(packet, OPCUA_PORTS):
@@ -76,10 +73,13 @@ def main():
     # print('Communication list: ', comm_description)
 
     # Plot the Throughput graph
-    plot_throughput(throughput_kbps, seconds, attack)
+    # plot_throughput(throughput_kbps, seconds, attack)
 
     # Calculate the cycle time
-    # rtt = calculate_round_trip_time(capture, addresses, SERVER_IP, CLIENTS_IPS)
+
+    rtts_client_server = calculate_round_trip_time(chronology_list, 'C-S')
+    print('Round Trip Times: ', rtts_client_server)
+
 
 
 if __name__ == '__main__':

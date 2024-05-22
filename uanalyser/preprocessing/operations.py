@@ -100,17 +100,48 @@ def clear_redundant_data(capture: scapy.PacketList) -> scapy.PacketList:
 
 
 def calculate_round_trip_time(
-    capture: scapy.PacketList, opcua_packets_index: list
+    chronology: list, flow: str = 'C-S'
 ) -> list:
-    """_summary_
+    """Calculate the round trip time (RTT) for a given chronology and communication description.
 
     Args:
-        capture (scapy.PacketList): _description_
-        opcua_packets_index (list): _description_
+        chronology (list): _description_
 
     Returns:
         list: _description_
+
+    Raises:
+        ValueError: If an unacceptable flow of communication is provided.
     """
+    types_dict = {
+        'C-S': {
+            'Request': 'Client to Server',
+            'Response': 'Server to Client',
+        },
+        'A-S': {
+            'Request': 'Attacker to Server',
+            'Response': 'Server to Attacker',
+        }
+    }
+    requests = {}
+    rtts = []
+    
+    if flow not in types_dict.keys():
+        raise ValueError(f"Invalid flow of communication: '{flow}'. Acceptable values are: {list(types_dict.keys())}")
+
+
+    for entry in chronology:
+        index, relative_time, src, dst, comm_type = entry
+        
+        if comm_type == types_dict[flow]['Request']:
+            requests[(src, dst)] = relative_time
+        elif comm_type == types_dict[flow]['Response']:
+            request_time = requests.pop((dst, src), None)
+            if request_time is not None:
+                rtt = relative_time - request_time
+                rtts.append([index,rtt])
+    
+    return rtts
 
 
 def define_communication_type(

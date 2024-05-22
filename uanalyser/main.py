@@ -13,7 +13,7 @@ PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
 
 def main():
     # Local variables
-    chronology_list = []
+    chronology_packets = []
     opcua_packets_index = []
 
     # Extract the attack name
@@ -39,15 +39,26 @@ def main():
         # Define the type of the package: request or response
         comm_type = define_communication_type(packet, SERVER_IP, CLIENTS_IPS)
 
-        # Clear reduntant data
+        # Clear reduntant data and flag OPC UA packets
         if index < 1:
-            chronology_list.append([index, 0, packet.src, packet.dst, comm_type])
-        if not any(relative_time == sublist[1] for sublist in chronology_list):
-            chronology_list.append([index, relative_time, packet.src, packet.dst, comm_type])
-
-        # Filter OPC UA packets
-        if is_opcua_packet(packet, OPCUA_PORTS):
-            opcua_packets_index.append(index)
+            opcua_flag = is_opcua_packet(packet, OPCUA_PORTS)
+            chronology_packets.append(
+                [index, 0, packet.src, packet.dst, comm_type, opcua_flag]
+            )
+        if not any(
+            relative_time == sublist[1] for sublist in chronology_packets
+        ):
+            opcua_flag = is_opcua_packet(packet, OPCUA_PORTS)
+            chronology_packets.append(
+                [
+                    index,
+                    relative_time,
+                    packet.src,
+                    packet.dst,
+                    comm_type,
+                    opcua_flag,
+                ]
+            )
 
         # TODO: Add an exception here
         # Detect the attack
@@ -59,16 +70,16 @@ def main():
             attack['Packet index'] = index
 
     # Calculate the throughput in kbps
-    period = chronology_list[-1][1]
+    period = chronology_packets[-1][1]
     throughput_kbps = calculate_throughput_in_kbps(
-        capture, chronology_list, period
+        capture, chronology_packets, period
     )
     seconds = list(range(1, len(throughput_kbps) + 1))
 
     # print('Attack: ', attack)
     # print('throughput_kbps: ',throughput_kbps)
     # print('Seconds: ',seconds)
-    # print('chronology_list: ', len(chronology_list))
+    # print('chronology_list: ', chronology_packets)
     # print('opcua_packets_index', opcua_packets_index)
     # print('Communication list: ', comm_description)
 
@@ -77,9 +88,8 @@ def main():
 
     # Calculate the cycle time
 
-    rtts_client_server = calculate_round_trip_time(chronology_list, 'C-S')
-    print('Round Trip Times: ', rtts_client_server)
-
+    # rtts_client_server = calculate_round_trip_time(chronology_packets, 'C-S')
+    # print('Round Trip Times: ', rtts_client_server)
 
 
 if __name__ == '__main__':

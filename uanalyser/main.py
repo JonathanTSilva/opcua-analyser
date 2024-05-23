@@ -7,14 +7,15 @@ from preprocessing.operations import *
 SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
 OPCUA_PORTS = [4840]
-PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
-# PCAPNG = f'{DATA}/0-dos_function_call_null_deref.pcapng'
+# PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
+PCAPNG = f'{DATA}/0-dos_function_call_null_deref.pcapng'
+# PCAPNG = f'{DATA}/1-dos_hping3.pcapng'
+# PCAPNG = f'{DATA}/2-mitm_arp.pcapng'
 
 
 def main():
     # Local variables
     chronology_packets = []
-    opcua_packets_index = []
 
     # Extract the attack name
     attack = extract_attack_name(PCAPNG)
@@ -75,21 +76,24 @@ def main():
         capture, chronology_packets, period
     )
     seconds = list(range(1, len(throughput_kbps) + 1))
-
-    # print('Attack: ', attack)
-    # print('throughput_kbps: ',throughput_kbps)
-    # print('Seconds: ',seconds)
-    # print('chronology_list: ', chronology_packets)
-    # print('opcua_packets_index', opcua_packets_index)
-    # print('Communication list: ', comm_description)
+    number_of_packets = len(chronology_packets)
 
     # Plot the Throughput graph
-    # plot_throughput(throughput_kbps, seconds, attack)
+    plot_throughput(throughput_kbps, seconds, attack)
 
     # Calculate the cycle time
-
-    # rtts_client_server = calculate_round_trip_time(chronology_packets, 'C-S')
-    # print('Round Trip Times: ', rtts_client_server)
+    rtts_client_server = calculate_round_trip_time(chronology_packets, 'C-S')
+    rtts_attacker_server = calculate_round_trip_time(chronology_packets, 'A-S')
+    plot_round_trip_time_per_packet(
+        rtts_client_server,
+        number_of_packets,
+        attack,
+        attacker_rtts=rtts_attacker_server,
+    )
+    plot_round_trip_time_per_second(
+        rtts_client_server, seconds, attack, attacker_rtts=rtts_attacker_server
+    )
+    plt.show()
 
 
 if __name__ == '__main__':

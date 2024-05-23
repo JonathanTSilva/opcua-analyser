@@ -95,7 +95,7 @@ def calculate_round_trip_time(
         Test the function:
 
         >>> calculate_round_trip_time(chronology_packets, 'C-S')
-        [[1007, 0.0018590000000031637], [1019, 0.0017919999999982394], [1962, 4.542042000000002]]
+        [[1007, 27.628043, 0.0018590000000031637], [1019, 27.737091, 0.0017919999999982394], [1962, 32.281199, 4.542042000000002]]
 
         >>> calculate_round_trip_time(chronology_packets, 'C-A')
         Traceback (most recent call last):
@@ -103,7 +103,7 @@ def calculate_round_trip_time(
         ValueError: Invalid flow of communication: 'C-A'. Acceptable values are: ['C-S', 'A-S']
 
         >>> calculate_round_trip_time(chronology_packets, 'A-S')
-        [[1967, 0.00020500000000112095], [1971, 0.002752000000000976], [1975, 0.0021079999999997767], [1978, 0.0022620000000017626], [1982, 0.0012949999999989359]]
+        [[1967, 32.342171, 0.00020500000000112095], [1971, 32.345775, 0.002752000000000976], [1975, 32.348871, 0.0021079999999997767], [1978, 32.352446, 0.0022620000000017626], [1982, 32.354639, 0.0012949999999989359]]
     """
     types_dict = {
         'C-S': {
@@ -132,7 +132,7 @@ def calculate_round_trip_time(
             request_time = requests.pop((dst, src), None)
             if request_time is not None:
                 rtt = relative_time - request_time
-                rtts.append([index, rtt])
+                rtts.append([index, relative_time, rtt])
 
     return rtts
 

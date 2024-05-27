@@ -8,9 +8,9 @@ SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
 OPCUA_PORTS = [4840]
 # PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
-PCAPNG = f'{DATA}/0-dos_function_call_null_deref.pcapng'
-# PCAPNG = f'{DATA}/1-dos_hping3.pcapng'
-# PCAPNG = f'{DATA}/2-mitm_arp.pcapng'
+PCAPNG = f'{DATA_PCAPNG}/0-dos_function_call_null_deref.pcapng'
+# PCAPNG = f'{DATA_PCAPNG}/1-dos_hping3.pcapng'
+# PCAPNG = f'{DATA_PCAPNG}/2-mitm_arp.pcapng'
 
 
 def main():
@@ -79,7 +79,7 @@ def main():
     number_of_packets = len(chronology_packets)
 
     # Plot the Throughput graph
-    plot_throughput(throughput_kbps, seconds, attack)
+    plot_throughput(throughput_kbps, seconds, attack, performance=False)
 
     # Calculate the cycle time
     rtts_client_server = calculate_round_trip_time(chronology_packets, 'C-S')
@@ -89,10 +89,16 @@ def main():
         number_of_packets,
         attack,
         attacker_rtts=rtts_attacker_server,
+        performance=True,
     )
     plot_round_trip_time_per_second(
-        rtts_client_server, seconds, attack, attacker_rtts=rtts_attacker_server
+        rtts_client_server,
+        seconds,
+        attack,
+        attacker_rtts=rtts_attacker_server,
+        performance=True,
     )
+    plot_performance_data(seconds, attack, is_twiny=False)
     plt.show()
 
 

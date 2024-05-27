@@ -1,10 +1,71 @@
+import re
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from matplotlib.ticker import FuncFormatter
+from paths import *
 
 
 class GraphUtils:
     """Class to provide utility methods for the graphics."""
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def decode_attack_to_file_name(attack: dict) -> str:
+        """Decode the attack to a file name.
+
+        Args:
+            attack (dict): The dictionary of the attack.
+
+        Returns:
+            str: The file name.
+
+        Example:
+            >>> GraphUtils.decode_attack_to_file_name({'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})
+            '0-dos_attack_example.csv'
+        """
+        type_mapping = {'None': '0', 'Sign': '1', 'Sign & Encrypt': '2'}
+        attack_type = type_mapping.get(attack['Type'], 'unknown')
+        attack_name = re.sub(r'\s+', '_', attack['Name'].lower())
+        return f'{attack_type}-{attack_name}.csv'
+
+    @staticmethod
+    def get_csv_data(file_path: str) -> pd.DataFrame:
+        """Read the CSV file and return its contents as a DataFrame.
+
+        Args:
+            file_path (str): The path to the CSV file.
+
+        Returns:
+            pd.DataFrame: The data from the CSV file.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            Exception: If another unknown error occurs while reading the file.
+
+        Example:
+            >>> GraphUtils.get_csv_data('tests/assets/example.csv')
+            Traceback (most recent call last):
+            ...
+            FileNotFoundError: No such file or directory: "tests/assets/example.csv".
+
+            >>> GraphUtils.get_csv_data('tests/assets/0-dos_attack_example.csv')  # doctest: +NORMALIZE_WHITESPACE
+                 Timestamp    CPU (%)   Memory (%)
+            0     0.000006     5.77        3.75
+            ...
+            [502 rows x 3 columns]
+        """
+        try:
+            return pd.read_csv(file_path)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f'No such file or directory: "{file_path}".'
+            )
+        except Exception as e:
+            raise Exception(f'An error occurred: {e}')
 
     @staticmethod
     def extract_rtt_plot_values(data: list) -> tuple:
@@ -53,8 +114,92 @@ class GraphUtils:
         ]
 
 
+def performance_data_axle(
+    ax: plt.Axes, attack: dict, *, performance: bool, twin: bool = True
+) -> plt.Axes:
+    """Plot performance data alongside the main graph.
+
+    Args:
+        ax (matplotlib.axes.Axes): The main axis object.
+        attack (dict): The dictionary containing attack information.
+        performance (bool): Flag indicating whether performance data should be plotted.
+        twin (bool): Flag indicating whether the performance data should be plotted on the same axis.
+
+    Returns:
+        matplotlib.axes.Axes: The modified axis object.
+
+    Example:
+        >>> import matplotlib.pyplot as plt
+        >>> from plot.graphics import GraphUtils
+        >>> attack = {'Type': 'None', 'Name': 'DOS FUNCTION CALL NULL DEREF', 'Relative time': 32.341966, 'Packet index': 1966}
+        >>> ax = plt.gca()
+        >>> performance_data_axle(ax, attack, True)  # doctest: +ELLIPSIS
+        <Axes: >
+    """
+    if performance:
+        csv_filename = GraphUtils.decode_attack_to_file_name(attack)
+        csv_file = f'{DATA_PERF}/{csv_filename}'
+        try:
+            performance_data = GraphUtils.get_csv_data(csv_file)
+            
+            if set(['Timestamp', 'CPU (%)', 'Memory (%)']).issubset(performance_data.columns):
+                aux = ax.twinx() if twin else ax
+                aux.plot(performance_data['Timestamp'], performance_data['CPU (%)'], 'g-', label='CPU (%)')
+                aux.plot(performance_data['Timestamp'], performance_data['Memory (%)'], 'm-', label='Memory (%)')
+                aux.set_ylabel('CPU (%) / Memory (%)', fontsize=9)
+                aux.legend(loc='upper right', fontsize=9)
+            else:
+                print(f"Performance data in {csv_file} is missing required columns.")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File {csv_file} not found.")
+        except Exception as e:
+            raise Exception(f"An error occurred while reading the file {csv_file}: {e}")
+    return ax
+
+
+def plot_performance_data(seconds: list, attack: dict, *, is_twiny: bool = True) -> None:
+    """Plot performance data.
+
+    Args:
+        seconds (list): The list of seconds.
+        attack (dict): The dictionary of the attack.
+
+    Returns:
+        None
+
+    Example:
+        >>> plot_performance_data([1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})  # doctest: +SKIP
+    """
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    ax1.plot(seconds, [0] * len(seconds), color='w', linewidth=0.5)
+    if 'Relative time' in attack and attack['Relative time']:
+        ax1.axvline(
+            x=attack['Relative time'],
+            color='r',
+            linestyle='--',
+            linewidth=0.8,
+            label='Início do Ataque',
+        )
+    ax1.set_xlabel('Tempo (segundos)', fontsize=9)
+    ax1.set_ylabel('Performance Data', fontsize=9)
+    ax1.set_title(
+        r'$\bf{Performance\;Data}$'
+        + '\n\n'
+        + f'Nome do ataque: {attack["Name"]} - '
+        + f'Modo de segurança: {attack["Type"]}',
+        fontsize=9,
+    )
+    
+    ax1.grid(True, linestyle='dotted')
+    ax1 = performance_data_axle(ax1, attack, performance=True, twin=is_twiny)
+    plt.show(block=False)
+
+
 def plot_throughput(
-    throughput_kbps: list, seconds: list, attack: dict
+    throughput_kbps: list,
+    seconds: list,
+    attack: dict,
+    performance: bool = False,
 ) -> None:
     """Plot the throughput in kbps.
 
@@ -69,8 +214,8 @@ def plot_throughput(
     Example:
         >>> plot_throughput([0.099609375, 0.099609375, 0.099609375, 0.333984375, 0.0, 13.7861328125,], [1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})  # doctest: +SKIP
     """
-    plt.figure(figsize=(12, 6))
-    plt.plot(
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    ax1.plot(
         seconds,
         throughput_kbps,
         marker='o',
@@ -81,24 +226,25 @@ def plot_throughput(
         label='Throughput (KBps)',
     )
     if 'Relative time' in attack and attack['Relative time']:
-        plt.axvline(
+        ax1.axvline(
             x=attack['Relative time'],
             color='r',
             linestyle='--',
             linewidth=0.8,
             label='Início do Ataque',
         )
-    plt.xlabel('Tempo (segundos)', fontsize=9)
-    plt.ylabel('Throughput (KBps)', fontsize=9)
-    plt.title(
+    ax1.set_xlabel('Tempo (segundos)', fontsize=9)
+    ax1.set_ylabel('Throughput (KBps)', fontsize=9)
+    ax1.set_title(
         r'$\bf{Throughput}$'
         + '\n\n'
         + f'Nome do ataque: {attack["Name"]} - '
         + f'Modo de segurança: {attack["Type"]}',
         fontsize=9,
     )
-    plt.legend(fontsize=9)
-    plt.grid(True, linestyle='dotted')
+    ax1.legend(fontsize=9)
+    ax1.grid(True, linestyle='dotted')
+    # plt.subplots_adjust(bottom=0.17)
     plt.show(block=False)
 
 
@@ -109,6 +255,7 @@ def plot_round_trip_time_per_packet(
     *,
     scale_factor: float = 300.0,
     attacker_rtts: list = None,
+    performance: bool = False,
 ) -> None:
     """Plot the round trip time.
 
@@ -128,8 +275,8 @@ def plot_round_trip_time_per_packet(
     x_values, y_values = GraphUtils.extract_rtt_plot_values(rtts)
     normalized_y_values = GraphUtils.normalize_values(y_values)
 
-    plt.figure(figsize=(12, 6))
-    plt.scatter(
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    ax1.scatter(
         x_values,
         normalized_y_values,
         color='blue',
@@ -148,7 +295,7 @@ def plot_round_trip_time_per_packet(
         normalized_attacker_y_values = GraphUtils.normalize_values(
             attacker_y_values
         )
-        plt.scatter(
+        ax1.scatter(
             attacker_x_values,
             normalized_attacker_y_values,
             color='red',
@@ -160,7 +307,7 @@ def plot_round_trip_time_per_packet(
         )
 
     if 'Packet index' in attack and attack['Packet index']:
-        plt.axvline(
+        ax1.axvline(
             x=attack['Packet index'],
             color='r',
             linestyle='--',
@@ -168,29 +315,30 @@ def plot_round_trip_time_per_packet(
             label='Início do Ataque',
         )
 
-    plt.xlim(0, number_of_packets - 1)
-    plt.yscale('log')
+    ax1.set_xlim(0, number_of_packets - 1)
+    ax1.set_yscale('log')
 
     def log_formatter(x, pos):
         return f'{x:.3f}'
 
-    plt.gca().yaxis.set_major_formatter(FuncFormatter(log_formatter))
+    ax1.yaxis.set_major_formatter(FuncFormatter(log_formatter))
 
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xlabel('Número do pacote', fontsize=9)
-    plt.ylabel('Round Trip Time', fontsize=9)
-    plt.title(
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.set_xlabel('Número do pacote', fontsize=9)
+    ax1.set_ylabel('Round Trip Time', fontsize=9)
+    ax1.set_title(
         r'$\bf{Round\;Trip\;Time}$'
         + '\n\n'
         + f'Nome do ataque: {attack["Name"]} - '
         + f'Modo de segurança: {attack["Type"]}',
         fontsize=9,
     )
-    plt.subplots_adjust(bottom=0.17)
-    plt.legend(
+    
+    ax1.legend(
         bbox_to_anchor=(0.5, -0.2), fontsize=9, loc='lower center', ncol=3
     )
-    plt.grid(True, linestyle='dotted')
+    # ax1.grid(True, linestyle='dotted')
+    plt.subplots_adjust(bottom=0.17)
     plt.show(block=False)
 
 
@@ -201,6 +349,7 @@ def plot_round_trip_time_per_second(
     *,
     scale_factor: float = 200.0,
     attacker_rtts: list = None,
+    performance: bool = False,
 ) -> None:
     """Plot the round trip time.
 
@@ -240,8 +389,8 @@ def plot_round_trip_time_per_second(
     )
     normalized_y_values = GraphUtils.normalize_values(y_values)
 
-    plt.figure(figsize=(12, 6))
-    plt.scatter(
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    ax1.scatter(
         x_values,
         normalized_y_values,
         color='blue',
@@ -265,7 +414,7 @@ def plot_round_trip_time_per_second(
             attacker_y_values
         )
 
-        plt.scatter(
+        ax1.scatter(
             attacker_x_values,
             attacker_normalized_y_values,
             color='red',
@@ -277,7 +426,7 @@ def plot_round_trip_time_per_second(
         )
 
     if 'Relative time' in attack and attack['Relative time']:
-        plt.axvline(
+        ax1.axvline(
             x=int(attack['Relative time']),
             color='r',
             linestyle='--',
@@ -285,26 +434,26 @@ def plot_round_trip_time_per_second(
             label='Início do Ataque',
         )
 
-    plt.xlim(0, len(seconds) + 2)
-
+    ax1.set_xlim(0, len(seconds) + 2)
+    ax1.set_yscale('log')
+    
     def log_formatter(x, pos):
         return f'{x:.3f}'
 
-    plt.gca().yaxis.set_major_formatter(FuncFormatter(log_formatter))
-    plt.yscale('log')
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xlabel('Tempo (s)', fontsize=9)
-    plt.ylabel('Round Trip Time', fontsize=9)
-    plt.title(
+    ax1.yaxis.set_major_formatter(FuncFormatter(log_formatter))
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.set_xlabel('Tempo (s)', fontsize=9)
+    ax1.set_ylabel('Round Trip Time', fontsize=9)
+    ax1.set_title(
         r'$\bf{Round\;Trip\;Time}$'
         + '\n\n'
         + f'Nome do ataque: {attack["Name"]} - '
         + f'Modo de segurança: {attack["Type"]}',
         fontsize=9,
     )
-    plt.subplots_adjust(bottom=0.17)
-    plt.legend(
+    ax1.legend(
         bbox_to_anchor=(0.5, -0.2), fontsize=9, loc='lower center', ncol=3
     )
-    plt.grid(True, linestyle='dotted')
+    # plt.grid(True, linestyle='dotted')
+    plt.subplots_adjust(bottom=0.17)
     plt.show(block=False)

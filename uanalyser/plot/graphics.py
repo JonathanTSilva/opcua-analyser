@@ -25,12 +25,12 @@ class GraphUtils:
 
         Example:
             >>> GraphUtils.decode_attack_to_file_name({'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})
-            '0-dos_attack_example.csv'
+            '0-dos_attack_example'
         """
         type_mapping = {'None': '0', 'Sign': '1', 'Sign & Encrypt': '2'}
         attack_type = type_mapping.get(attack['Type'], 'unknown')
         attack_name = re.sub(r'\s+', '_', attack['Name'].lower())
-        return f'{attack_type}-{attack_name}.csv'
+        return f'{attack_type}-{attack_name}'
 
     @staticmethod
     def get_csv_data(file_path: str) -> pd.DataFrame:
@@ -79,6 +79,9 @@ class GraphUtils:
         Returns:
             tuple: The tuple of index and rtt values or time and rtt values.
 
+        Raises:
+            ValueError: If the data format is invalid.
+
         Example:
             >>> GraphUtils.extract_rtt_plot_values([[16, 20.80455, 3.999999999848569e-05], [102, 21.089922, 0.002322000000003044], [486, 22.965286, 0.0019799999999996487], [872, 24.852685, 0.001992000000001326], [1034, 25.657321, 0.00211699999999837]])  # doctest: +NORMALIZE_WHITESPACE
             ((16, 102, 486, 872, 1034), (3.999999999848569e-05, 0.002322000000003044, 0.0019799999999996487, 0.001992000000001326, 0.00211699999999837))
@@ -86,12 +89,21 @@ class GraphUtils:
             >>> GraphUtils.extract_rtt_plot_values([[20.80455, 3.999999999848569e-05], [21.089922, 0.002322000000003044], [22.965286, 0.0019799999999996487], [24.852685, 0.001992000000001326], [25.657321, 0.00211699999999837]])  # doctest: +NORMALIZE_WHITESPACE
             ((20.80455, 21.089922, 22.965286, 24.852685, 25.657321), (3.999999999848569e-05, 0.002322000000003044, 0.0019799999999996487, 0.001992000000001326, 0.00211699999999837))
         """
-        if len(data[0]) == 3:
-            index, rtt = zip(*[(index, rtt) for index, _, rtt in data])
-            return index, rtt
-        else:
-            time, rtt = zip(*[(time, rtt) for time, rtt in data])
-            return time, rtt
+        try:
+            if len(data[0]) == 3:
+                index, rtt = zip(*[(index, rtt) for index, _, rtt in data])
+                return index, rtt
+            elif len(data[0]) == 2:
+                time, rtt = zip(*[(time, rtt) for time, rtt in data])
+                return time, rtt
+            else:
+                raise ValueError(
+                    'Invalid data format: Each entry must have 2 or 3 elements.'
+                )
+        except Exception as e:
+            raise ValueError(
+                f'An error occurred while extracting RTT plot values: {e}'
+            )
 
     @staticmethod
     def normalize_values(values: list) -> list:
@@ -109,19 +121,24 @@ class GraphUtils:
         """
         max_value = max(values) if values else 1
         min_value = min(values) if values else 0
+        
+        # Check if all values are the same to avoid division by zero
+        if min_value == max_value:
+            return [0.5] * len(values)  # Assign a neutral normalized value (e.g., 0.5)
+        
         return [
             (value - min_value) / (max_value - min_value) for value in values
         ]
 
 
 def performance_data_axle(
-    ax: plt.Axes, attack: dict, *, performance: bool, twin: bool = True
+    ax: plt.Axes, filename: str, performance: bool, *, twin: bool = True
 ) -> plt.Axes:
     """Plot performance data alongside the main graph.
 
     Args:
         ax (matplotlib.axes.Axes): The main axis object.
-        attack (dict): The dictionary containing attack information.
+        filename (str): The name of the file.
         performance (bool): Flag indicating whether performance data should be plotted.
         twin (bool): Flag indicating whether the performance data should be plotted on the same axis.
 
@@ -131,38 +148,56 @@ def performance_data_axle(
     Example:
         >>> import matplotlib.pyplot as plt
         >>> from plot.graphics import GraphUtils
-        >>> attack = {'Type': 'None', 'Name': 'DOS FUNCTION CALL NULL DEREF', 'Relative time': 32.341966, 'Packet index': 1966}
         >>> ax = plt.gca()
-        >>> performance_data_axle(ax, attack, True)  # doctest: +ELLIPSIS
+        >>> performance_data_axle(ax, '0-dos_function_call_null_deref', performance=True, twin=True)  # doctest: +ELLIPSIS
         <Axes: >
     """
     if performance:
-        csv_filename = GraphUtils.decode_attack_to_file_name(attack)
-        csv_file = f'{DATA_PERF}/{csv_filename}'
+        csv_file = f'{DATA_PERF}/{filename}.csv'
         try:
             performance_data = GraphUtils.get_csv_data(csv_file)
-            
-            if set(['Timestamp', 'CPU (%)', 'Memory (%)']).issubset(performance_data.columns):
+
+            if set(['Timestamp', 'CPU (%)', 'Memory (%)']).issubset(
+                performance_data.columns
+            ):
                 aux = ax.twinx() if twin else ax
-                aux.plot(performance_data['Timestamp'], performance_data['CPU (%)'], 'g-', label='CPU (%)')
-                aux.plot(performance_data['Timestamp'], performance_data['Memory (%)'], 'm-', label='Memory (%)')
+                aux.plot(
+                    performance_data['Timestamp'],
+                    performance_data['CPU (%)'],
+                    'g-',
+                    label='CPU (%)',
+                )
+                aux.plot(
+                    performance_data['Timestamp'],
+                    performance_data['Memory (%)'],
+                    'm-',
+                    label='Memory (%)',
+                )
                 aux.set_ylabel('CPU (%) / Memory (%)', fontsize=9)
                 aux.legend(loc='upper right', fontsize=9)
             else:
-                print(f"Performance data in {csv_file} is missing required columns.")
+                print(
+                    f'Performance data in {csv_file} is missing required columns.'
+                )
         except FileNotFoundError:
-            raise FileNotFoundError(f"File {csv_file} not found.")
+            raise FileNotFoundError(f'File {csv_file} not found.')
         except Exception as e:
-            raise Exception(f"An error occurred while reading the file {csv_file}: {e}")
+            raise Exception(
+                f'An error occurred while reading the file {csv_file}: {e}'
+            )
     return ax
 
 
-def plot_performance_data(seconds: list, attack: dict, *, is_twiny: bool = True) -> None:
+def plot_performance_data(
+    seconds: list, attack: dict, filename: str, *, is_twiny: bool = True
+) -> None:
     """Plot performance data.
 
     Args:
         seconds (list): The list of seconds.
         attack (dict): The dictionary of the attack.
+        filename (str): The name of the file.
+        is_twiny (bool): Flag indicating whether the performance data should be plotted on the same axis.
 
     Returns:
         None
@@ -189,16 +224,22 @@ def plot_performance_data(seconds: list, attack: dict, *, is_twiny: bool = True)
         + f'Modo de segurança: {attack["Type"]}',
         fontsize=9,
     )
-    
+
     ax1.grid(True, linestyle='dotted')
-    ax1 = performance_data_axle(ax1, attack, performance=True, twin=is_twiny)
+    ax1 = performance_data_axle(ax1, filename, performance=True, twin=is_twiny)
     plt.show(block=False)
+    fig.savefig(
+        f'{OUTPUT}/{filename}-perf.png',
+        dpi=600,
+    )
+    plt.close(fig)
 
 
 def plot_throughput(
     throughput_kbps: list,
     seconds: list,
     attack: dict,
+    filename: str,
     performance: bool = False,
 ) -> None:
     """Plot the throughput in kbps.
@@ -207,12 +248,14 @@ def plot_throughput(
         throughput_kbps (list): The throughput values in kbps.
         seconds (list): The list of seconds.
         attack (dict): The dictionary of the attack.
+        filename (str): The name of the file.
+        performance (bool): Flag indicating whether performance data should be plotted.
 
     Returns:
         None
 
     Example:
-        >>> plot_throughput([0.099609375, 0.099609375, 0.099609375, 0.333984375, 0.0, 13.7861328125,], [1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})  # doctest: +SKIP
+        >>> plot_throughput([0.099609375, 0.099609375, 0.099609375, 0.333984375, 0.0, 13.7861328125,], [1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966}, '0-dos_function_call_null_deref')  # doctest: +SKIP
     """
     fig, ax1 = plt.subplots(figsize=(12, 6))
     ax1.plot(
@@ -244,14 +287,21 @@ def plot_throughput(
     )
     ax1.legend(fontsize=9)
     ax1.grid(True, linestyle='dotted')
+    ax1 = performance_data_axle(ax1, filename, performance)
     # plt.subplots_adjust(bottom=0.17)
-    plt.show(block=False)
+    # plt.show(block=False)
+    fig.savefig(
+        f'{OUTPUT}/{filename}-tput.png',
+        dpi=600,
+    )
+    plt.close(fig)
 
 
 def plot_round_trip_time_per_packet(
     rtts: list,
     number_of_packets: int,
     attack: dict,
+    filename: str,
     *,
     scale_factor: float = 300.0,
     attacker_rtts: list = None,
@@ -263,8 +313,10 @@ def plot_round_trip_time_per_packet(
         rtts (list): The list of round trip times of a Client-Server communication.
         number_of_packets (int): The number of packets.
         attack (dict): The dictionary of the attack.
+        filename (str): The name of the file.
         scale_factor (float): The scale factor.
         attacker_rtts (list): The list of attacker round trip times.
+        performance (bool): Flag indicating whether performance data should be plotted.
 
     Returns:
         None
@@ -287,7 +339,7 @@ def plot_round_trip_time_per_packet(
         label='Round Trip Time (RTT)',
     )
 
-    if attacker_rtts is not None:
+    if attacker_rtts:
         (
             attacker_x_values,
             attacker_y_values,
@@ -333,19 +385,25 @@ def plot_round_trip_time_per_packet(
         + f'Modo de segurança: {attack["Type"]}',
         fontsize=9,
     )
-    
+
     ax1.legend(
         bbox_to_anchor=(0.5, -0.2), fontsize=9, loc='lower center', ncol=3
     )
     # ax1.grid(True, linestyle='dotted')
     plt.subplots_adjust(bottom=0.17)
-    plt.show(block=False)
+    # plt.show(block=False)
+    fig.savefig(
+        f'{OUTPUT}/{filename}-rttp.png',
+        dpi=600,
+    )
+    plt.close(fig)
 
 
 def plot_round_trip_time_per_second(
     rtts: list,
     seconds: list,
     attack: dict,
+    filename: str,
     *,
     scale_factor: float = 200.0,
     attacker_rtts: list = None,
@@ -357,8 +415,10 @@ def plot_round_trip_time_per_second(
         rtts (list): The list of round trip times of a Client-Server communication.
         seconds (list): The list of seconds.
         attack (dict): The dictionary of the attack.
+        filename (str): The name of the file.
         scale_factor (float): The scale factor.
         attacker_rtts (list): The list of attacker round trip times.
+        performance (bool): Flag indicating whether performance data should be plotted.
 
     Returns:
         None
@@ -401,7 +461,7 @@ def plot_round_trip_time_per_second(
         label='Round Trip Time (RTT) per second',
     )
 
-    if attacker_rtts is not None:
+    if attacker_rtts:
         attacker_rtts_by_second = group_rtts_by_second(attacker_rtts)
         avg_attacker_rtts_per_second = calculate_avg_rtts_per_second(
             attacker_rtts_by_second
@@ -436,7 +496,7 @@ def plot_round_trip_time_per_second(
 
     ax1.set_xlim(0, len(seconds) + 2)
     ax1.set_yscale('log')
-    
+
     def log_formatter(x, pos):
         return f'{x:.3f}'
 
@@ -456,4 +516,9 @@ def plot_round_trip_time_per_second(
     )
     # plt.grid(True, linestyle='dotted')
     plt.subplots_adjust(bottom=0.17)
-    plt.show(block=False)
+    # plt.show(block=False)
+    fig.savefig(
+        f'{OUTPUT}/{filename}-rtts.png',
+        dpi=600,
+    )
+    plt.close(fig)

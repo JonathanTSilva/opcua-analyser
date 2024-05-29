@@ -16,6 +16,7 @@ __all__ = [
     'TESTS_ASSETS',
     'DOCS',
     'DOCS_ASSETS',
+    'OUTPUT',
 ]
 
 UANALYSER = os.path.dirname(os.path.abspath(__file__))
@@ -28,3 +29,4 @@ TESTS = os.path.join(ROOT, 'tests')
 TESTS_ASSETS = os.path.join(TESTS, 'assets')
 DOCS = os.path.join(ROOT, 'docs')
 DOCS_ASSETS = os.path.join(DOCS, 'assets')
+OUTPUT = os.path.join(UANALYSER, 'output')

@@ -1,3 +1,5 @@
+import os
+
 import scapy.all as scapy
 from paths import *
 from plot.graphics import *
@@ -7,21 +9,27 @@ from preprocessing.operations import *
 SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
 OPCUA_PORTS = [4840]
-# PCAPNG = f'{TESTS_ASSETS}/0-dos_attack_example.pcapng'
-PCAPNG = f'{DATA_PCAPNG}/0-dos_function_call_null_deref.pcapng'
-# PCAPNG = f'{DATA_PCAPNG}/1-dos_hping3.pcapng'
-# PCAPNG = f'{DATA_PCAPNG}/2-mitm_arp.pcapng'
 
 
-def main():
+def main(pcapng_file):
+    """
+    Entry point of the program.
+
+    This function analyzes a PCAPNG file containing network traffic data.
+    It extracts the attack name, opens the file, and performs various calculations and plotting.
+
+    Returns:
+        None
+    """
+
     # Local variables
     chronology_packets = []
 
     # Extract the attack name
-    attack = extract_attack_name(PCAPNG)
+    attack = extract_attack_name(pcapng_file)
 
     # Open File
-    capture = open_pcapng_file(PCAPNG)
+    capture = open_pcapng_file(pcapng_file)
     # capture = clear_redundant_data(capture)
     capture_length = len(capture)
     # capture_length = 20
@@ -77,30 +85,59 @@ def main():
     )
     seconds = list(range(1, len(throughput_kbps) + 1))
     number_of_packets = len(chronology_packets)
-
-    # Plot the Throughput graph
-    plot_throughput(throughput_kbps, seconds, attack, performance=False)
+    filename = GraphUtils.decode_attack_to_file_name(attack)
 
     # Calculate the cycle time
     rtts_client_server = calculate_round_trip_time(chronology_packets, 'C-S')
     rtts_attacker_server = calculate_round_trip_time(chronology_packets, 'A-S')
+
+    # Check if performance data CSV file exists before plotting performance data
+    csv_file = f'{DATA_PERF}/{filename}.csv'
+    if os.path.exists(csv_file):
+        plot_performance_data(seconds, attack, filename, is_twiny=False)
+
     plot_round_trip_time_per_packet(
         rtts_client_server,
         number_of_packets,
         attack,
+        filename,
         attacker_rtts=rtts_attacker_server,
-        performance=True,
+        performance=False,
     )
     plot_round_trip_time_per_second(
         rtts_client_server,
         seconds,
         attack,
+        filename,
         attacker_rtts=rtts_attacker_server,
-        performance=True,
+        performance=False,
     )
-    plot_performance_data(seconds, attack, is_twiny=False)
-    plt.show()
+    plot_throughput(throughput_kbps, seconds, attack, filename, performance=False)
+
+    # # Don't close the plot window
+    # plt.show()
+
+
+def process_all_pcapng_files(data_dir):
+    """
+    Process all the pcapng files in a directory.
+
+    Args:
+        data_dir (str): The directory containing the pcapng files.
+
+    Returns:
+        None
+    """
+    files = os.listdir(data_dir)
+    files = [item for item in files if item.endswith('.pcapng')]
+
+    for elem in files:
+        # global PCAPNG
+        # PCAPNG = os.path.join(data_dir, elem)
+        pcapng_file = os.path.join(data_dir, elem)
+        print(f'Processing {pcapng_file}')
+        main(pcapng_file)
 
 
 if __name__ == '__main__':
-    main()
+    process_all_pcapng_files(DATA_PCAPNG)

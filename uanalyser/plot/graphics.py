@@ -168,17 +168,17 @@ def performance_data_axle(
                     performance_data['CPU (%)'],
                     color='#90BE6D',
                     linestyle='-',
-                    label='CPU (%)',
+                    label='CPU',
                 )
                 aux.plot(
                     performance_data['Timestamp'],
                     performance_data['Memory (%)'],
-                    color='#F9844A',
+                    color='#277DA1',
                     linestyle='-',
-                    label='Memory (%)',
+                    label='RAM',
                 )
-                aux.set_ylabel('CPU (%) / Memory (%)', fontsize=9)
-                aux.legend(loc='upper right', fontsize=9)
+                aux.set_ylabel('Performance (%)', fontsize=9)
+                aux.legend(loc='upper left', fontsize=9)
             else:
                 print(
                     f'Performance data in {csv_file} is missing required columns.'
@@ -216,7 +216,7 @@ def plot_performance_data(
         >>> plot_performance_data([1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})  # doctest: +SKIP
     """
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.plot(seconds, [0] * len(seconds), color='#90BE6D', linewidth=0.5)
+    ax1.plot(seconds, [0] * len(seconds), color='w', linewidth=0.5)
     if 'Relative time' in attack and attack['Relative time']:
         ax1.axvline(
             x=attack['Relative time'],
@@ -225,13 +225,15 @@ def plot_performance_data(
             linewidth=0.8,
             label='Início do Ataque',
         )
-    ax1.set_xlabel('Tempo (segundos)', fontsize=9)
-    ax1.set_ylabel('Performance Data', fontsize=9)
+    ax1.set_xlabel('Tempo (s)', fontsize=9)
+    ax1.set_ylabel('Performance (%)', fontsize=9)
     ax1.set_title(
-        r'$\bf{Performance\;Data}$'
+        r'$\bf{DESEMPENHO\;DO\;HOST\;(SERVIDOR)}$'
         + '\n\n'
-        + f'Nome do ataque: {attack["Name"]} - '
-        + f'Modo de segurança: {attack["Type"]}',
+        + r'$\bf{Nome\;do\;ataque:}$'
+        + f'{attack["Name"]} - '
+        + r'$\bf{Modo\;de\;segurança:}$'
+        + f'{attack["Type"]}',
         fontsize=9,
     )
 
@@ -290,16 +292,18 @@ def plot_throughput(
             linewidth=0.8,
             label='Início do Ataque',
         )
-    ax1.set_xlabel('Tempo (segundos)', fontsize=9)
+    ax1.set_xlabel('Tempo (s)', fontsize=9)
     ax1.set_ylabel('Throughput (KBps)', fontsize=9)
     ax1.set_title(
         r'$\bf{Throughput}$'
         + '\n\n'
-        + f'Nome do ataque: {attack["Name"]} - '
-        + f'Modo de segurança: {attack["Type"]}',
+        + r'$\bf{Nome\;do\;ataque:}$'
+        + f'{attack["Name"]} - '
+        + r'$\bf{Modo\;de\;segurança:}$'
+        + f'{attack["Type"]}',
         fontsize=9,
     )
-    ax1.legend(fontsize=9)
+    ax1.legend(loc='upper left', fontsize=9)
     ax1.grid(True, linestyle='dotted')
     ax1 = performance_data_axle(ax1, filename, performance)
     # plt.subplots_adjust(bottom=0.17)
@@ -355,7 +359,7 @@ def plot_round_trip_time_per_packet(
         s=[value * scale_factor for value in normalized_y_values],
         edgecolors='#4D908E',
         linewidths=1,
-        label='Round Trip Time (RTT)',
+        label='RTT Cliente-Servidor',
     )
 
     if attacker_rtts:
@@ -374,7 +378,7 @@ def plot_round_trip_time_per_packet(
             s=[value * scale_factor for value in normalized_attacker_y_values],
             edgecolors='#F3722C',
             linewidths=1,
-            label='Attacker Round Trip Time (RTT)',
+            label='RTT Invasor-Servidor',
         )
 
     if 'Packet index' in attack and attack['Packet index']:
@@ -395,13 +399,15 @@ def plot_round_trip_time_per_packet(
     ax1.yaxis.set_major_formatter(FuncFormatter(log_formatter))
 
     ax1.grid(True, linestyle='--', alpha=0.7)
-    ax1.set_xlabel('Número do pacote', fontsize=9)
+    ax1.set_xlabel('Pacote', fontsize=9)
     ax1.set_ylabel('Round Trip Time', fontsize=9)
     ax1.set_title(
-        r'$\bf{Round\;Trip\;Time}$'
+        r'$\bf{ROUND\;TRIP\;TIME\;(PACOTE)}$'
         + '\n\n'
-        + f'Nome do ataque: {attack["Name"]} - '
-        + f'Modo de segurança: {attack["Type"]}',
+        + r'$\bf{Nome\;do\;ataque:}$'
+        + f'{attack["Name"]} - '
+        + r'$\bf{Modo\;de\;segurança:}$'
+        + f'{attack["Type"]}',
         fontsize=9,
     )
 
@@ -481,7 +487,7 @@ def plot_round_trip_time_per_second(
         s=[value * scale_factor for value in normalized_y_values],
         edgecolors='#4D908E',
         linewidths=1,
-        label='Round Trip Time (RTT) per second',
+        label='RTT Cliente-Servidor',
     )
 
     if attacker_rtts:
@@ -505,7 +511,7 @@ def plot_round_trip_time_per_second(
             s=[value * scale_factor for value in attacker_normalized_y_values],
             edgecolors='#F3722C',
             linewidths=1,
-            label='Attacker Round Trip Time (RTT) per second',
+            label='RTT Invasor-Servidor',
         )
 
     if 'Relative time' in attack and attack['Relative time']:
@@ -528,10 +534,12 @@ def plot_round_trip_time_per_second(
     ax1.set_xlabel('Tempo (s)', fontsize=9)
     ax1.set_ylabel('Round Trip Time', fontsize=9)
     ax1.set_title(
-        r'$\bf{Round\;Trip\;Time}$'
+        r'$\bf{ROUND\;TRIP\;TIME\;(TEMPO)}$'
         + '\n\n'
-        + f'Nome do ataque: {attack["Name"]} - '
-        + f'Modo de segurança: {attack["Type"]}',
+        + r'$\bf{Nome\;do\;ataque:}$'
+        + f'{attack["Name"]} - '
+        + r'$\bf{Modo\;de\;segurança:}$'
+        + f'{attack["Type"]}',
         fontsize=9,
     )
     ax1.legend(

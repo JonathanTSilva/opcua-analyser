@@ -9,9 +9,10 @@ from preprocessing.operations import *
 SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
 OPCUA_PORTS = [4840]
+PCAPNG = f'{DATA_PCAPNG}/0-dos_function_call_null_deref.pcapng'
 
 
-def main(pcapng_file):
+def main(pcapng_file, *, show_plots=False):
     """
     Entry point of the program.
 
@@ -94,7 +95,9 @@ def main(pcapng_file):
     # Check if performance data CSV file exists before plotting performance data
     csv_file = f'{DATA_PERF}/{filename}.csv'
     if os.path.exists(csv_file):
-        plot_performance_data(seconds, attack, filename, is_twiny=False)
+        plot_performance_data(
+            seconds, attack, filename, is_twiny=False, show_plots=show_plots
+        )
 
     plot_round_trip_time_per_packet(
         rtts_client_server,
@@ -103,6 +106,7 @@ def main(pcapng_file):
         filename,
         attacker_rtts=rtts_attacker_server,
         performance=False,
+        show_plots=show_plots,
     )
     plot_round_trip_time_per_second(
         rtts_client_server,
@@ -111,11 +115,20 @@ def main(pcapng_file):
         filename,
         attacker_rtts=rtts_attacker_server,
         performance=False,
+        show_plots=show_plots,
     )
-    plot_throughput(throughput_kbps, seconds, attack, filename, performance=False)
+    plot_throughput(
+        throughput_kbps,
+        seconds,
+        attack,
+        filename,
+        performance=False,
+        show_plots=show_plots,
+    )
 
-    # # Don't close the plot window
-    # plt.show()
+    # Don't close the plot window
+    if show_plots:
+        plt.show()
 
 
 def process_all_pcapng_files(data_dir):
@@ -136,8 +149,9 @@ def process_all_pcapng_files(data_dir):
         # PCAPNG = os.path.join(data_dir, elem)
         pcapng_file = os.path.join(data_dir, elem)
         print(f'Processing {pcapng_file}')
-        main(pcapng_file)
+        main(pcapng_file, show_plots=False)
 
 
 if __name__ == '__main__':
-    process_all_pcapng_files(DATA_PCAPNG)
+    # process_all_pcapng_files(DATA_PCAPNG)
+    main(PCAPNG, show_plots=True)

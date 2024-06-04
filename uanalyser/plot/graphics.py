@@ -121,11 +121,13 @@ class GraphUtils:
         """
         max_value = max(values) if values else 1
         min_value = min(values) if values else 0
-        
+
         # Check if all values are the same to avoid division by zero
         if min_value == max_value:
-            return [0.5] * len(values)  # Assign a neutral normalized value (e.g., 0.5)
-        
+            return [0.5] * len(
+                values
+            )  # Assign a neutral normalized value (e.g., 0.5)
+
         return [
             (value - min_value) / (max_value - min_value) for value in values
         ]
@@ -164,13 +166,15 @@ def performance_data_axle(
                 aux.plot(
                     performance_data['Timestamp'],
                     performance_data['CPU (%)'],
-                    'g-',
+                    color='#90BE6D',
+                    linestyle='-',
                     label='CPU (%)',
                 )
                 aux.plot(
                     performance_data['Timestamp'],
                     performance_data['Memory (%)'],
-                    'm-',
+                    color='#F9844A',
+                    linestyle='-',
                     label='Memory (%)',
                 )
                 aux.set_ylabel('CPU (%) / Memory (%)', fontsize=9)
@@ -189,7 +193,12 @@ def performance_data_axle(
 
 
 def plot_performance_data(
-    seconds: list, attack: dict, filename: str, *, is_twiny: bool = True
+    seconds: list,
+    attack: dict,
+    filename: str,
+    *,
+    is_twiny: bool = True,
+    show_plots: bool = False,
 ) -> None:
     """Plot performance data.
 
@@ -198,6 +207,7 @@ def plot_performance_data(
         attack (dict): The dictionary of the attack.
         filename (str): The name of the file.
         is_twiny (bool): Flag indicating whether the performance data should be plotted on the same axis.
+        show_plots (bool): Flag indicating whether the plot should be shown.
 
     Returns:
         None
@@ -206,11 +216,11 @@ def plot_performance_data(
         >>> plot_performance_data([1, 2, 3, 4, 5, 6], {'Type': 'None', 'Name': 'DOS ATTACK EXAMPLE', 'Relative time': 32.341966, 'Packet index': 1966})  # doctest: +SKIP
     """
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    ax1.plot(seconds, [0] * len(seconds), color='w', linewidth=0.5)
+    ax1.plot(seconds, [0] * len(seconds), color='#90BE6D', linewidth=0.5)
     if 'Relative time' in attack and attack['Relative time']:
         ax1.axvline(
             x=attack['Relative time'],
-            color='r',
+            color='#F94144',
             linestyle='--',
             linewidth=0.8,
             label='Início do Ataque',
@@ -227,12 +237,14 @@ def plot_performance_data(
 
     ax1.grid(True, linestyle='dotted')
     ax1 = performance_data_axle(ax1, filename, performance=True, twin=is_twiny)
-    plt.show(block=False)
     fig.savefig(
         f'{OUTPUT}/{filename}-perf.png',
         dpi=600,
     )
-    plt.close(fig)
+    if show_plots:
+        plt.show(block=False)
+    else:
+        plt.close(fig)
 
 
 def plot_throughput(
@@ -241,6 +253,7 @@ def plot_throughput(
     attack: dict,
     filename: str,
     performance: bool = False,
+    show_plots: bool = False,
 ) -> None:
     """Plot the throughput in kbps.
 
@@ -250,6 +263,7 @@ def plot_throughput(
         attack (dict): The dictionary of the attack.
         filename (str): The name of the file.
         performance (bool): Flag indicating whether performance data should be plotted.
+        show_plots (bool): Flag indicating whether the plot should be shown.
 
     Returns:
         None
@@ -262,7 +276,7 @@ def plot_throughput(
         seconds,
         throughput_kbps,
         marker='o',
-        color='b',
+        color='#277DA1',
         linewidth=0.5,
         markersize=6,
         alpha=0.5,
@@ -271,7 +285,7 @@ def plot_throughput(
     if 'Relative time' in attack and attack['Relative time']:
         ax1.axvline(
             x=attack['Relative time'],
-            color='r',
+            color='#F94144',
             linestyle='--',
             linewidth=0.8,
             label='Início do Ataque',
@@ -294,7 +308,10 @@ def plot_throughput(
         f'{OUTPUT}/{filename}-tput.png',
         dpi=600,
     )
-    plt.close(fig)
+    if show_plots:
+        plt.show(block=False)
+    else:
+        plt.close(fig)
 
 
 def plot_round_trip_time_per_packet(
@@ -306,6 +323,7 @@ def plot_round_trip_time_per_packet(
     scale_factor: float = 300.0,
     attacker_rtts: list = None,
     performance: bool = False,
+    show_plots: bool = False,
 ) -> None:
     """Plot the round trip time.
 
@@ -317,6 +335,7 @@ def plot_round_trip_time_per_packet(
         scale_factor (float): The scale factor.
         attacker_rtts (list): The list of attacker round trip times.
         performance (bool): Flag indicating whether performance data should be plotted.
+        show_plots (bool): Flag indicating whether the plot should be shown.
 
     Returns:
         None
@@ -331,10 +350,10 @@ def plot_round_trip_time_per_packet(
     ax1.scatter(
         x_values,
         normalized_y_values,
-        color='blue',
+        color='#43AA8B',
         alpha=0.3,
         s=[value * scale_factor for value in normalized_y_values],
-        edgecolors='blue',
+        edgecolors='#4D908E',
         linewidths=1,
         label='Round Trip Time (RTT)',
     )
@@ -350,10 +369,10 @@ def plot_round_trip_time_per_packet(
         ax1.scatter(
             attacker_x_values,
             normalized_attacker_y_values,
-            color='red',
+            color='#F8961E',
             alpha=0.3,
             s=[value * scale_factor for value in normalized_attacker_y_values],
-            edgecolors='red',
+            edgecolors='#F3722C',
             linewidths=1,
             label='Attacker Round Trip Time (RTT)',
         )
@@ -361,7 +380,7 @@ def plot_round_trip_time_per_packet(
     if 'Packet index' in attack and attack['Packet index']:
         ax1.axvline(
             x=attack['Packet index'],
-            color='r',
+            color='#F94144',
             linestyle='--',
             linewidth=0.8,
             label='Início do Ataque',
@@ -391,12 +410,14 @@ def plot_round_trip_time_per_packet(
     )
     # ax1.grid(True, linestyle='dotted')
     plt.subplots_adjust(bottom=0.17)
-    # plt.show(block=False)
     fig.savefig(
         f'{OUTPUT}/{filename}-rttp.png',
         dpi=600,
     )
-    plt.close(fig)
+    if show_plots:
+        plt.show(block=False)
+    else:
+        plt.close(fig)
 
 
 def plot_round_trip_time_per_second(
@@ -408,6 +429,7 @@ def plot_round_trip_time_per_second(
     scale_factor: float = 200.0,
     attacker_rtts: list = None,
     performance: bool = False,
+    show_plots: bool = False,
 ) -> None:
     """Plot the round trip time.
 
@@ -419,6 +441,7 @@ def plot_round_trip_time_per_second(
         scale_factor (float): The scale factor.
         attacker_rtts (list): The list of attacker round trip times.
         performance (bool): Flag indicating whether performance data should be plotted.
+        show_plots (bool): Flag indicating whether the plot should be shown.
 
     Returns:
         None
@@ -453,10 +476,10 @@ def plot_round_trip_time_per_second(
     ax1.scatter(
         x_values,
         normalized_y_values,
-        color='blue',
+        color='#43AA8B',
         alpha=0.3,
         s=[value * scale_factor for value in normalized_y_values],
-        edgecolors='blue',
+        edgecolors='#4D908E',
         linewidths=1,
         label='Round Trip Time (RTT) per second',
     )
@@ -477,10 +500,10 @@ def plot_round_trip_time_per_second(
         ax1.scatter(
             attacker_x_values,
             attacker_normalized_y_values,
-            color='red',
+            color='#F8961E',
             alpha=0.3,
             s=[value * scale_factor for value in attacker_normalized_y_values],
-            edgecolors='red',
+            edgecolors='#F3722C',
             linewidths=1,
             label='Attacker Round Trip Time (RTT) per second',
         )
@@ -488,7 +511,7 @@ def plot_round_trip_time_per_second(
     if 'Relative time' in attack and attack['Relative time']:
         ax1.axvline(
             x=int(attack['Relative time']),
-            color='r',
+            color='#F94144',
             linestyle='--',
             linewidth=0.8,
             label='Início do Ataque',
@@ -516,9 +539,11 @@ def plot_round_trip_time_per_second(
     )
     # plt.grid(True, linestyle='dotted')
     plt.subplots_adjust(bottom=0.17)
-    # plt.show(block=False)
     fig.savefig(
         f'{OUTPUT}/{filename}-rtts.png',
         dpi=600,
     )
-    plt.close(fig)
+    if show_plots:
+        plt.show(block=False)
+    else:
+        plt.close(fig)

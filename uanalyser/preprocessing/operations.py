@@ -75,7 +75,7 @@ def calculate_package_time_difference(
 def calculate_round_trip_time(
     chronology_packets: list, flow: str = 'C-S'
 ) -> list:
-    """Calculate the round trip time (RTT) for a given chronology and communication flow.
+    """Calculate the round trip time (RTT) for a given chronology and communication flow in milliseconds.
 
     Args:
         chronology_packets (list): The list of packet indices, timestamps, source and destination addresses, communication type and the is_opcua flag.
@@ -95,7 +95,7 @@ def calculate_round_trip_time(
         Test the function:
 
         >>> calculate_round_trip_time(chronology_packets, 'C-S')
-        [[1007, 27.628043, 0.0018590000000031637], [1019, 27.737091, 0.0017919999999982394], [1962, 32.281199, 4.542042000000002]]
+        [[1007, 27.628043, 1.8590000000031637], [1019, 27.737091, 1.7919999999982394], [1962, 32.281199, 4542.042000000002]]
 
         >>> calculate_round_trip_time(chronology_packets, 'C-A')
         Traceback (most recent call last):
@@ -103,7 +103,7 @@ def calculate_round_trip_time(
         ValueError: Invalid flow of communication: 'C-A'. Acceptable values are: ['C-S', 'A-S']
 
         >>> calculate_round_trip_time(chronology_packets, 'A-S')
-        [[1967, 32.342171, 0.00020500000000112095], [1971, 32.345775, 0.002752000000000976], [1975, 32.348871, 0.0021079999999997767], [1978, 32.352446, 0.0022620000000017626], [1982, 32.354639, 0.0012949999999989359]]
+        [[1967, 32.342171, 0.20500000000112095], [1971, 32.345775, 2.752000000000976], [1975, 32.348871, 2.1079999999997767], [1978, 32.352446, 2.2620000000017626], [1982, 32.354639, 1.294999999998936]]
     """
     types_dict = {
         'C-S': {
@@ -131,7 +131,7 @@ def calculate_round_trip_time(
         elif comm_type == types_dict[flow]['Response']:
             request_time = requests.pop((dst, src), None)
             if request_time is not None:
-                rtt = relative_time - request_time
+                rtt = (relative_time - request_time) * 1000
                 rtts.append([index, relative_time, rtt])
 
     return rtts

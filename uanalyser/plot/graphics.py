@@ -249,6 +249,56 @@ def plot_performance_data(
         plt.close(fig)
 
 
+def plot_packets_per_second(
+    packets_per_second: list,
+    seconds: list,
+    attack: dict,
+    filename: str,
+    performance: bool = False,
+    show_plots: bool = False,
+) -> None:
+    """Plot the packets per second."""
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    ax1.bar(
+        seconds,
+        packets_per_second,
+        color='#f8961e',
+        label='Pacotes OPC UA',
+    )
+    if 'Relative time' in attack and attack['Relative time']:
+        ax1.axvline(
+            x=attack['Relative time'],
+            color='#F94144',
+            linestyle='--',
+            linewidth=0.8,
+            label='Início do Ataque',
+        )
+    ax1.set_xlabel('Tempo (s)', fontsize=9)
+    ax1.set_ylabel('Pacotes OPC UA', fontsize=9)
+    ax1.set_title(
+        r'$\bf{Pacotes\;por\;segundo}$'
+        + '\n\n'
+        + r'$\bf{Nome\;do\;ataque:}$'
+        + f'{attack["Name"]} - '
+        + r'$\bf{Modo\;de\;segurança:}$'
+        + f'{attack["Type"]}',
+        fontsize=9,
+    )
+    ax1.legend(loc='upper left', fontsize=9)
+    ax1.grid(True, linestyle='dotted')
+    ax1 = performance_data_axle(ax1, filename, performance)
+    # plt.subplots_adjust(bottom=0.17)
+    # plt.show(block=False)
+    fig.savefig(
+        f'{OUTPUT}/{filename}-pack.png',
+        dpi=600,
+    )
+    if show_plots:
+        plt.show(block=False)
+    else:
+        plt.close(fig)
+
+
 def plot_throughput(
     throughput_kbps: list,
     seconds: list,

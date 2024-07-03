@@ -1,11 +1,11 @@
 import scapy.all as scapy
 
 
-def calculate_throughput_in_kbps(
+def calculate_throughput_and_packets(
     capture: scapy.PacketList, chronology_packets: list, period: float
 ) -> list:
     """
-    Calculates the throughput in kilobits per second (kbps) for a given capture and chronology.
+    Calculates the throughput in kilobits per second (kbps) and the amount of packets per second for a given capture and chronology.
 
     Args:
         capture (scapy.PacketList): The captured packets.
@@ -13,7 +13,8 @@ def calculate_throughput_in_kbps(
         period (float): The duration of the capture period in seconds.
 
     Returns:
-        list: A list of throughput values in kilobits per second (kbps) for each second of the capture period.
+        throughput_persecond: A list of throughput values in kilobits per second (kbps) for each second of the capture period.
+        opcua_packets_persecond: A list of the amount of OPC UA packets per second for each second of the capture period.
 
     Examples:
         First, you need to read a packet capture file to get the packets:
@@ -21,26 +22,30 @@ def calculate_throughput_in_kbps(
         >>> from scapy.all import rdpcap
         >>> capture = rdpcap('tests/assets/example.pcapng')
 
-        Additionaly, generate a list of packet timestamps and indices:
-        >>> initial_time = capture[0].time
-        >>> chronology_packets = [(index, round(float(packet.time) - float(initial_time), 6)) for index, packet in enumerate(capture)]
+        And create the chronology_packets list as follows:
+        >>> chronology_packets = [[13, 1, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [15, 1, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [23, 1, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [39, 2, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [40, 2, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [47, 3, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [50, 4, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [51, 5, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', False], [54, 5, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [55, 5, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [56, 5, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [76, 6, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [56, 6, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [70, 9, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [78, 9, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [79, 10, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [84, 11, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [87, 15, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True], [88, 15, 'e4:5f:01:2e:1b:c1', 'e4:5f:01:2e:1a:b6', 'Client to Server', True], [90, 15, 'e4:5f:01:2e:1a:b6', 'e4:5f:01:2e:1b:c1', 'Server to Client', True]]
 
         Then, you can use these packets to call the function:
 
-        >>> calculate_throughput_in_kbps(capture, chronology_packets, 60)
-        [0.94921875, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.94921875, 0.0, 0.0, 0.0, 0.216796875, 0.31640625, 0.0, 0.0, 0.0, 0.0, 0.0, 28.056640625, 29.470703125, 26.564453125, 30.283203125, 27.86328125, 29.66796875, 30.798828125, 26.435546875, 29.986328125, 30.373046875, 26.435546875, 30.244140625, 27.208984375, 29.986328125, 31.345703125, 28.396484375, 29.830078125, 26.693359375, 29.857421875, 29.986328125, 28.759765625, 30.611328125, 28.58984375, 30.73828125]
+        >>> calculate_throughput_and_packets(capture, chronology_packets, 15)
+        ([0.0, 0.23828125, 0.1962890625, 0.064453125, 0.064453125, 1.404296875, 0.7880859375, 0.0, 0.0, 0.216796875, 0.15234375, 0.1552734375, 0.0, 0.0, 0.0], [0, 3, 2, 1, 1, 3, 2, 0, 0, 2, 1, 1, 0, 0, 0])
     """
     segment_duration = 1
+    opcua_packets_persecond = []
     throughput_persecond = []
     for second in range(int(period)):
         len_bytes = 0
+        packets = 0
         for elem in chronology_packets:
             if int(elem[1]) == second * segment_duration:
                 len_bytes += len(capture[elem[0]])
+                if elem[5]:
+                    packets += 1
             if int(elem[1]) > second * segment_duration:
                 break
         throughput_persecond.append(len_bytes)
-    return [value / 1024 for value in throughput_persecond]
+        opcua_packets_persecond.append(packets)
+    return [value / 1024 for value in throughput_persecond], opcua_packets_persecond
 
 
 def calculate_package_time_difference(

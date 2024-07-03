@@ -8,8 +8,8 @@ from preprocessing.operations import *
 
 SERVER_IP = '192.168.164.101'
 CLIENTS_IPS = ['192.168.164.102']
-OPCUA_PORTS = [4840]
-PCAPNG = f'{DATA_PCAPNG}/0-dos_function_call_null_deref.pcapng'
+OPCUA_PORTS = [4840, 4841, 49320, 62541, 4897, 53530, 48050, 4885, 4855, 26543]
+# PCAPNG = f'{DATA_PCAPNG}/0-dos_certificate_inf_chain_loop.pcapng'
 
 
 def main(pcapng_file, *, show_plots=False):
@@ -79,9 +79,9 @@ def main(pcapng_file, *, show_plots=False):
             attack['Relative time'] = relative_time
             attack['Packet index'] = index
 
-    # Calculate the throughput in kbps
+    # Calculate the throughput in kbps and the packets per second
     period = chronology_packets[-1][1]
-    throughput_kbps = calculate_throughput_in_kbps(
+    throughput_kbps, opcua_packets_per_second = calculate_throughput_and_packets(
         capture, chronology_packets, period
     )
     seconds = list(range(1, len(throughput_kbps) + 1))
@@ -125,6 +125,14 @@ def main(pcapng_file, *, show_plots=False):
         performance=False,
         show_plots=show_plots,
     )
+    plot_packets_per_second(
+        opcua_packets_per_second,
+        seconds,
+        attack,
+        filename,
+        performance=False,
+        show_plots=show_plots,
+    )
 
     # Don't close the plot window
     if show_plots:
@@ -148,10 +156,11 @@ def process_all_pcapng_files(data_dir):
         # global PCAPNG
         # PCAPNG = os.path.join(data_dir, elem)
         pcapng_file = os.path.join(data_dir, elem)
-        print(f'Processing {pcapng_file}')
-        main(pcapng_file, show_plots=False)
+        # print(f'Processing {pcapng_file}')
+        print(pcapng_file.split('/')[-1])
+        # main(pcapng_file, show_plots=False)
 
 
 if __name__ == '__main__':
-    # process_all_pcapng_files(DATA_PCAPNG)
-    main(PCAPNG, show_plots=True)
+    process_all_pcapng_files(DATA_PCAPNG)
+    # main(PCAPNG, show_plots=True)
